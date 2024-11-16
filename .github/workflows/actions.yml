@@ -6,8 +6,11 @@ on:
   workflow_dispatch:
 
 env:
+  TUNNEL_SERVICE_HOSTNAME: ${{ secrets.TUNNEL_SERVICE_HOSTNAME }}
+  TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.TUNNEL_SERVICE_TOKEN_ID }}
+  TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.TUNNEL_SERVICE_TOKEN_SECRET }}
   SSH_REPO: ${{  secrets.SSH_REPO }}
-  SSH_PROXY_COMMAND: "/tmp/cloudflared access ssh --id ${{ secrets.CLOUDFLARE_CLIENT_ID}} --secret ${{ secrets.CLOUDFLARE_CLIENT_SECRET }} --hostname ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}}"
+  SSH_PROXY_COMMAND: "/tmp/cloudflared access ssh "
 
 jobs:
   test:
@@ -32,5 +35,5 @@ jobs:
           chmod +x /tmp/cloudflared
     - name: Run deploy
       run: |
-          ssh -o StrictHostKeyChecking=no ProxyCommand="${SSH_PROXY_COMMAND}" "cd ${SSH_REPO} && git pull && docker stop message-expander && docker build ./ -t message-expander && docker run message-expander"
+          ssh -o StrictHostKeyChecking=no ProxyCommand="${SSH_PROXY_COMMAND}" -l ${SSH_USER} -- "cd ${SSH_REPO} && git pull && docker stop message-expander && docker build ./ -t message-expander && docker run message-expander"
 
