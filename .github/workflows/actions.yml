@@ -10,7 +10,7 @@ env:
   TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.TUNNEL_SERVICE_TOKEN_ID }}
   TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.TUNNEL_SERVICE_TOKEN_SECRET }}
   SSH_REPO: ${{  secrets.SSH_REPO }}
-  SSH_PROXY_COMMAND: "/tmp/cloudflared access ssh "
+  SSH_PROXY_COMMAND: "/tmp/cloudflared access ssh"
 
 jobs:
   test:
@@ -35,5 +35,5 @@ jobs:
           chmod +x /tmp/cloudflared
     - name: Run deploy
       run: |
-          ssh -o StrictHostKeyChecking=no ProxyCommand="${SSH_PROXY_COMMAND}" -l ${SSH_USER} -- "cd ${SSH_REPO} && git pull && docker stop message-expander && docker build ./ -t message-expander && docker run message-expander"
+          ssh -o StrictHostKeyChecking=no -o ProxyCommand="${SSH_PROXY_COMMAND}" -l ${SSH_USER} ${TUNNEL_SERVICE_HOSTNAME} -- "cd ${SSH_REPO} && git pull && docker stop message-expander && docker build ./ -t message-expander && docker run message-expander"
 
