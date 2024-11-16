@@ -1,0 +1,39 @@
+name: cicd
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  SSH_PROXY_COMMAND: "/tmp/cloudflared access ssh --id ${{ secrets.CLOUDFLARE_CLIENT_ID}} --secret ${{ secrets.CLOUDFLARE_CLIENT_SECRET }} --hostname %h"
+  SSH_USER: ${{  secrets.SSH_USER }}
+  SSH_HOST: ${{  secrets.SSH_HOST }}
+  SSH_REPO: ${{  secrets.SSH_REPO }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.23.3
+      - name: Run Test
+        run: go test ./...
+  deploy:
+   runs-on: ubuntu-latest
+   steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - name: Install cloudflared
+      run: |
+          curl -sL -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/download/2024.11.0/cloudflared-linux-amd64
+          chmod +x /tmp/cloudflared
+    - name: Run deploy
+      run: |
+          ssh -o StrictHostKeyChecking=no ProxyCommand="${SSH_PROXY_COMMAND}" ${SSH_USER}@${SSH_HOST} \
+          "cd ${SSH_REPO} && git pull && docker stop message-expander && docker build ./ -t message-expander && docker run message-expander"
+
