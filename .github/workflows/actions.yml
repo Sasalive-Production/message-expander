@@ -6,10 +6,8 @@ on:
   workflow_dispatch:
 
 env:
-  SSH_PROXY_COMMAND: "/tmp/cloudflared access ssh --id ${{ secrets.CLOUDFLARE_CLIENT_ID}} --secret ${{ secrets.CLOUDFLARE_CLIENT_SECRET }} --hostname %h"
-  SSH_USER: ${{  secrets.SSH_USER }}
-  SSH_HOST: ${{  secrets.SSH_HOST }}
   SSH_REPO: ${{  secrets.SSH_REPO }}
+  SSH_PROXY_COMMAND: "/tmp/cloudflared access ssh --id ${{ secrets.CLOUDFLARE_CLIENT_ID}} --secret ${{ secrets.CLOUDFLARE_CLIENT_SECRET }} --hostname ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}}"
 
 jobs:
   test:
@@ -34,6 +32,5 @@ jobs:
           chmod +x /tmp/cloudflared
     - name: Run deploy
       run: |
-          ssh -o StrictHostKeyChecking=no ProxyCommand="${SSH_PROXY_COMMAND}" ${SSH_USER}@${SSH_HOST} \
-          "cd ${SSH_REPO} && git pull && docker stop message-expander && docker build ./ -t message-expander && docker run message-expander"
+          ssh -o StrictHostKeyChecking=no ProxyCommand="${SSH_PROXY_COMMAND}" "cd ${SSH_REPO} && git pull && docker stop message-expander && docker build ./ -t message-expander && docker run message-expander"
 
